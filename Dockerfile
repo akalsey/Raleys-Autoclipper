@@ -43,5 +43,5 @@ RUN crontab /etc/cron.d/raleys-autoclipper
 RUN touch /var/log/cron.log
 
 # Start cron and keep the container running
-CMD ["sh", "-c", "git -C /app pull && cron && /usr/local/bin/python /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1 && tail -f /var/log/cron.log"]
+CMD ["sh", "-c", "cron && /usr/local/bin/python /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1 && tail -f /var/log/cron.log"]
 # ENTRYPOINT ["/bin/bash"]
