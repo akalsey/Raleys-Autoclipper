@@ -27,3 +27,11 @@ RALEYS_PASSWORD=
 This application can be run with cron. For example to run it daily, add something to your crontab like this:
 
 `0 0 * * * /usr/bin/python3 /path/to/raleys-autoclippper.py`
+
+## Docker
+
+There's a Dockerfile in this repo that will run the script. It relies on the same environment variables mentioned above. If you have a .env file in the you build the Docker container from, it will use that. Or you can edit the Dockerfile to set the environment varialbles. Or pass them in the `docker run` command or set them in a Docker compose file.
+
+The Docker container will run the script on startup and also contains a cronjob to run it every morning, US Pacific time.
+
+The Dockerfile fetches the latest version of the script from Github during build, so you'll be up to date each time you build

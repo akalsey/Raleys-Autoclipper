@@ -23,9 +23,10 @@ MEMBER_DEALS_URL = "https://www.raleys.com/something-extra/offers-and-savings?fq
 MY_COUPONS_URL = "https://www.raleys.com/something-extra/offers-and-savings?fq=DigitalCoupons&clip=Unclipped"
 
 async def login_and_clip_offers():
+    logging.info("Starting...")
     async with async_playwright() as p:
         # Start a browser session
-        browser = await p.chromium.launch(headless=True)  # set headless=True to run without GUI
+        browser = await p.chromium.launch(headless=False)  # set headless=True to run without GUI
         context = await browser.new_context()
         page = await context.new_page()
         
