@@ -52,5 +52,3 @@ RUN echo "/var/log/cron.log {\n    daily\n    rotate 7\n    compress\n    missin
 
 # Start cron, pull the latest code, run the script once, and keep the container running
 CMD ["sh", "-c", "git -C /app pull && cron && /usr/bin/python3 /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1 && tail -f /var/log/cron.log"]
-
-#CMD ["tail", "-f", "/dev/null"]
