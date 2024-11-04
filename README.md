@@ -32,6 +32,8 @@ This application can be run with cron. For example to run it daily, add somethin
 
 There's a Dockerfile in this repo that will run the script. It relies on the same environment variables mentioned above. If you have a .env file in the you build the Docker container from, it will use that. Or you can edit the Dockerfile to set the environment varialbles. Or pass them in the `docker run` command or set them in a Docker compose file.
 
-The Docker container will run the script on startup and also contains a cronjob to run it every morning, US Pacific time.
+The Docker container will run the script on startup and also contains a cronjob to run it every morning and every evening, US Pacific time. Raley's ads and new coupons tend to come out on Tuesdays, so this will also run every four hours on Tuesday to maximize the chances of picking up new coupons.
 
-The Dockerfile fetches the latest version of the script from Github during build, so you'll be up to date each time you build
+Configure an environment variable named `MAIL_TO` in the Dockerfile, in the `.env` file, or on the command line. This email address will receive a daily log from the script.
+
+The Dockerfile fetches the latest version of the script from Github daily so you'll always be up to date.
