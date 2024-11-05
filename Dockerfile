@@ -28,6 +28,7 @@ COPY .env /app/.env
 
 # Install Playwright, asyncio, and python-dotenv in case they are missing
 RUN pip install asyncio python-dotenv playwright
+RUN playwright install --with-deps chromium
 
 # Set environment variables to prevent Python from writing .pyc files and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1
