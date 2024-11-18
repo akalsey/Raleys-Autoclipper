@@ -11,6 +11,7 @@ services:
     #  - RALEYS_EMAIL=your_email@example.com
     #  - RALEYS_PASSWORD=your_password
     #  - MAIL_TO=your_email@example.com
+    detach: true
     logging:
       driver: "json-file"
       options:
