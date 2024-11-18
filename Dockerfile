@@ -1,5 +1,5 @@
 # Use the Playwright base image for Python
-FROM mcr.microsoft.com/playwright/python:v1.48.0-focal
+FROM mcr.microsoft.com/playwright/python:latest
 
 # Set the working directory in the container
 WORKDIR /app
@@ -28,12 +28,13 @@ COPY .env /app/.env
 
 # Set Playwright cache directory to a location that persists
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN mkdir -p /ms-playwright 
+
 
 # Install Playwright, asyncio, and python-dotenv in case they are missing, and install Playwright browsers
-# Set appropriate permissions for Playwright binaries to ensure cron can access them
-# Set appropriate permissions for Playwright binaries to ensure cron can access them
 RUN pip install asyncio python-dotenv playwright
-RUN playwright install --with-deps chromium
+RUN PLAYWRIGHT_BROWSERS_PATH=/ms-playwright playwright install --with-deps --only-shell chromium
+# Set appropriate permissions for Playwright binaries to ensure cron can access them
 RUN chmod -R 755 /ms-playwright
 
 # Set environment variables to prevent Python from writing .pyc files and buffering stdout/stderr
