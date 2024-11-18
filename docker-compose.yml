@@ -1,0 +1,20 @@
+services:
+  raleys-autoclipper:
+    image: raleys-autoclipper:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: raleys-autoclipper
+    # environment:
+    # ** uncomment this if you aren't setting the env 
+    # ** variables another way (like a .env file)
+    #  - RALEYS_EMAIL=your_email@example.com
+    #  - RALEYS_PASSWORD=your_password
+    #  - MAIL_TO=your_email@example.com
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
