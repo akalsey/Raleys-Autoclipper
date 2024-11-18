@@ -26,9 +26,15 @@ COPY .env /app/.env
 # ENV RALEYS_PASSWORD="your_password"
 # ENV MAIL_TO="your_email@example.com"
 
-# Install Playwright, asyncio, and python-dotenv in case they are missing
+# Set Playwright cache directory to a location that persists
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Install Playwright, asyncio, and python-dotenv in case they are missing, and install Playwright browsers
+# Set appropriate permissions for Playwright binaries to ensure cron can access them
+# Set appropriate permissions for Playwright binaries to ensure cron can access them
 RUN pip install asyncio python-dotenv playwright
 RUN playwright install --with-deps chromium
+RUN chmod -R 755 /ms-playwright
 
 # Set environment variables to prevent Python from writing .pyc files and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -52,4 +58,4 @@ RUN touch /var/log/cron.log
 RUN echo "/var/log/cron.log {\n    daily\n    rotate 7\n    compress\n    missingok\n    notifempty\n    create 0644 root root\n    prerotate\n        /usr/bin/mail -s \"Raley's Clipper log\" \$MAIL_TO < /var/log/cron.log\n    endscript\n}" > /etc/logrotate.d/cronlog
 
 # Start cron, pull the latest code, run the script once, and keep the container running
-CMD ["sh", "-c", "git -C /app pull && cron && /usr/bin/python3 /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1 && tail -f /var/log/cron.log"]
+CMD ["sh", "-c", "cron && /usr/bin/python3 /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1 && tail -f /var/log/cron.log"]
