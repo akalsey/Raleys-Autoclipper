@@ -33,7 +33,10 @@ RUN mkdir -p /ms-playwright
 
 # Install Playwright, asyncio, and python-dotenv in case they are missing, and install Playwright browsers
 RUN pip install asyncio python-dotenv playwright
-RUN PLAYWRIGHT_BROWSERS_PATH=/ms-playwright playwright install --with-deps --only-shell chromium
+RUN PLAYWRIGHT_BROWSERS_PATH=/ms-playwright playwright install --with-deps chromium
+### TODO: once the base image is updated to 1.49, add the --only-shell  flag to the
+###       install so that only the new headless chromium is installed
+
 # Set appropriate permissions for Playwright binaries to ensure cron can access them
 RUN chmod -R 755 /ms-playwright
 
