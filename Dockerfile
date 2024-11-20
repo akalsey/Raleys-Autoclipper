@@ -1,5 +1,7 @@
 # Use the Playwright base image for Python
-FROM mcr.microsoft.com/playwright/python:latest
+FROM mcr.microsoft.com/playwright/python:v1.48.0-noble
+
+
 
 # Set the working directory in the container
 WORKDIR /app
