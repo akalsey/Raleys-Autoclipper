@@ -53,6 +53,9 @@ async def login_and_clip_offers():
 
             # Clip My Coupons
             await clip_offers(page, MY_COUPONS_URL)
+
+            logging.info("... Finished")
+
         
         except Exception as e:
             logging.error(f"An error occurred: {e}")
@@ -62,6 +65,7 @@ async def login_and_clip_offers():
 async def clip_offers(page, offers_url):
     while True:
         # Go to the offers page
+        logging.info(f"Checking {offers_url}")
         await page.goto(offers_url)
         await page.wait_for_timeout(3000)  # Allow time for offers to load
 
