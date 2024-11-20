@@ -1,5 +1,5 @@
 # Use the Playwright base image for Python
-FROM mcr.microsoft.com/playwright/python:v1.48.0-noble
+FROM mcr.microsoft.com/playwright/python:v1.48.0-jammy
 
 
 
