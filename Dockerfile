@@ -49,7 +49,8 @@ ENV PYTHONUNBUFFERED=1
 # Add crontab to run the script twice daily and every four hours on Tuesdays
 RUN echo "0 9,21 * * * /usr/bin/python3 /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1" > /etc/cron.d/raleys-autoclipper \
     && echo "0 */4 * * 2 /usr/bin/python3 /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1" >> /etc/cron.d/raleys-autoclipper \
-    && echo "0 0 * * * git -C /app pull >> /var/log/cron.log 2>&1" >> /etc/cron.d/raleys-autoclipper
+    && echo "0 0 * * * git -C /app pull >> /var/log/cron.log 2>&1" >> /etc/cron.d/raleys-autoclipper \
+    && echo "0 0 * * * PLAYWRIGHT_BROWSERS_PATH=/ms-playwright playwright install --with-deps chromium" >> /etc/cron.d/raleys-autoclipper
 
 # Give execution rights on the cron job
 RUN chmod 0644 /etc/cron.d/raleys-autoclipper
