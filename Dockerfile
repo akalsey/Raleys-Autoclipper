@@ -29,8 +29,9 @@ COPY .env /app/.env
 # ENV MAIL_TO="your_email@example.com"
 
 # Set Playwright cache directory to a location that persists
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN mkdir -p /ms-playwright 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN echo "PLAYWRIGHT_BROWSERS_PATH=/ms-playwright" >> /etc/environment
 
 
 # Install Playwright, asyncio, and python-dotenv in case they are missing, and install Playwright browsers
@@ -50,7 +51,7 @@ ENV PYTHONUNBUFFERED=1
 RUN echo "0 9,21 * * * /usr/bin/python3 /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1" > /etc/cron.d/raleys-autoclipper \
     && echo "0 */4 * * 2 /usr/bin/python3 /app/raleys-autoclipper.py >> /var/log/cron.log 2>&1" >> /etc/cron.d/raleys-autoclipper \
     && echo "0 0 * * * git -C /app pull >> /var/log/cron.log 2>&1" >> /etc/cron.d/raleys-autoclipper \
-    && echo "0 0 * * * PLAYWRIGHT_BROWSERS_PATH=/ms-playwright playwright install --with-deps chromium" >> /etc/cron.d/raleys-autoclipper
+    && echo "0 0 * * * playwright install --with-deps chromium" >> /etc/cron.d/raleys-autoclipper
 
 # Give execution rights on the cron job
 RUN chmod 0644 /etc/cron.d/raleys-autoclipper
