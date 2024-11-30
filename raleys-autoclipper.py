@@ -23,7 +23,8 @@ MEMBER_DEALS_URL = "https://www.raleys.com/something-extra/offers-and-savings?fq
 MY_COUPONS_URL = "https://www.raleys.com/something-extra/offers-and-savings?fq=DigitalCoupons&clip=Unclipped"
 
 async def login_and_clip_offers():
-    logging.info("Starting...")
+    logging.debug("Starting...")
+    total_clipped = 0  # Initialize total counter
     async with async_playwright() as p:
         # Start a browser session
         browser = await p.chromium.launch(headless=True)  # set headless=True to run without GUI
@@ -46,15 +47,19 @@ async def login_and_clip_offers():
             logging.debug("Logged in successfully")
 
             # Clip Unclipped My Offers
-            await clip_offers(page, UNCLIPPED_MY_OFFERS_URL)
+            clipped = await clip_offers(page, UNCLIPPED_MY_OFFERS_URL)
+            total_clipped += clipped
 
             # Clip Member Deals
-            await clip_offers(page, MEMBER_DEALS_URL)
+            clipped = await clip_offers(page, MEMBER_DEALS_URL)
+            total_clipped += clipped
 
             # Clip My Coupons
-            await clip_offers(page, MY_COUPONS_URL)
+            clipped = await clip_offers(page, MY_COUPONS_URL)
+            total_clipped += clipped
 
-            logging.info("... Finished")
+            logging.info(f"Successfully clipped {total_clipped} total offers")
+            logging.debug("... Finished")
 
         
         except Exception as e:
@@ -63,9 +68,10 @@ async def login_and_clip_offers():
             await browser.close()
 
 async def clip_offers(page, offers_url):
+    offers_clipped = 0  # Initialize counter for this category
     while True:
         # Go to the offers page
-        logging.info(f"Checking {offers_url}")
+        logging.debug(f"Checking {offers_url}")
         await page.goto(offers_url)
         await page.wait_for_timeout(3000)  # Allow time for offers to load
 
@@ -76,7 +82,7 @@ async def clip_offers(page, offers_url):
             logging.debug(f"No more offers to clip on {offers_url}")
             break
 
-        logging.info(f"Found {count} offers to clip on {offers_url}")
+        logging.debug(f"Found {count} offers to clip on {offers_url}")
 
         # Click each clip button in reverse order to avoid DOM update issues
         for i in range(count - 1, -1, -1):
@@ -92,12 +98,16 @@ async def clip_offers(page, offers_url):
                     logging.debug("Offer is no longer available. Clicking OK to continue.")
                     await page.click('button:has-text("OK")')
                     await page.wait_for_timeout(500)
+                else:
+                    offers_clipped += 1  # Increment counter only if successfully clipped
             except Exception as e:
                 logging.warning(f"Failed to clip offer at index {i}: {e}")
-                continue  # Try to clip the next button
+                continue
 
         # Reload the page to check if there are additional offers left to clip
         await page.wait_for_timeout(2000)
+    
+    return offers_clipped  # Return the number of offers clipped in this category
 
 if __name__ == "__main__":
     # Schedule this script to run daily (use cron for Linux or Task Scheduler for Windows)
