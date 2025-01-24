@@ -21,6 +21,21 @@ RALEYS_HOME_URL = "https://www.raleys.com/"
 UNCLIPPED_MY_OFFERS_URL = "https://www.raleys.com/something-extra/offers-and-savings?fq=SomethingExtra&clip=Unclipped"
 MEMBER_DEALS_URL = "https://www.raleys.com/something-extra/offers-and-savings?fq=WeeklyExclusive&clip=Unclipped"
 MY_COUPONS_URL = "https://www.raleys.com/something-extra/offers-and-savings?fq=DigitalCoupons&clip=Unclipped"
+SOMETHING_EXTRA_DOLLARS_URL = "https://www.raleys.com/account/something-extra-dollars"
+
+async def toggle_something_extra_dollars(page):
+    logging.debug("Navigating to Something Extra Dollars page")
+    await page.goto(SOMETHING_EXTRA_DOLLARS_URL)
+    await page.wait_for_selector('button[role="switch"]', timeout=10000)  # Wait for the toggle switch to appear
+
+    # Check the state of the toggle switch
+    is_checked = await page.get_attribute('button[role="switch"]', 'aria-checked')
+    if is_checked == "false":
+        logging.debug("Toggle switch is off. Turning it on.")
+        await page.click('button[role="switch"]')
+        await page.wait_for_timeout(1000)  # Allow time for the action to register
+    else:
+        logging.debug("Toggle switch is already on.")
 
 async def login_and_clip_offers():
     logging.debug("Starting...")
@@ -45,6 +60,9 @@ async def login_and_clip_offers():
             await page.click('button[type="submit"].group.flex.items-center.justify-center')
             await page.wait_for_load_state("networkidle")  # Wait for the page to finish loading after login
             logging.debug("Logged in successfully")
+
+            # Toggle Something Extra Dollars switch
+            await toggle_something_extra_dollars(page)
 
             # Clip Unclipped My Offers
             clipped = await clip_offers(page, UNCLIPPED_MY_OFFERS_URL)
