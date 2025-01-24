@@ -1,5 +1,7 @@
 This script automatically clips every coupon available in your Raley's Something Extra account. Raley's has instituted an obnoxious system where self-advertised prices sometimes require that you hunt down and click on a coupon in their website or app. This script clicks all of them for you, so next time you shop you'll have every possible discount. 
 
+It also applies available Something Extra Dollars to your account so you don't have to remember to apply your points each quarter.
+
 ## Installation
 
 Node and Python are required on your system. Install the script dependencies with these commands:
