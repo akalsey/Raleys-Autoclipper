@@ -1,3 +1,14 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "asyncio",
+#     "playwright",
+#     "python-dotenv",
+#     "flask"
+# ]
+# ///
+
 import asyncio
 from playwright.async_api import async_playwright
 import logging
@@ -31,7 +42,7 @@ async def toggle_something_extra_dollars(page):
     # Check the state of the toggle switch
     is_checked = await page.get_attribute('button[role="switch"]', 'aria-checked')
     if is_checked == "false":
-        logging.debug("Toggle switch is off. Turning it on.")
+        logging.info("Activating Something Extra Dollars")
         await page.click('button[role="switch"]')
         await page.wait_for_timeout(1000)  # Allow time for the action to register
     else:
