@@ -73,7 +73,10 @@ async def login_and_clip_offers():
             logging.debug("Logged in successfully")
 
             # Toggle Something Extra Dollars switch
-            await toggle_something_extra_dollars(page)
+            try:
+                await toggle_something_extra_dollars(page)
+            except Exception as e:
+                logging.warning(f"Failed to toggle Something Extra Dollars: {e}")
 
             # Clip Unclipped My Offers
             clipped = await clip_offers(page, UNCLIPPED_MY_OFFERS_URL)
