@@ -72,12 +72,6 @@ async def login_and_clip_offers():
             await page.wait_for_load_state("networkidle")  # Wait for the page to finish loading after login
             logging.debug("Logged in successfully")
 
-            # Toggle Something Extra Dollars switch
-            try:
-                await toggle_something_extra_dollars(page)
-            except Exception as e:
-                logging.warning(f"Failed to toggle Something Extra Dollars: {e}")
-
             # Clip Unclipped My Offers
             clipped = await clip_offers(page, UNCLIPPED_MY_OFFERS_URL)
             total_clipped += clipped
@@ -89,6 +83,12 @@ async def login_and_clip_offers():
             # Clip My Coupons
             clipped = await clip_offers(page, MY_COUPONS_URL)
             total_clipped += clipped
+
+            # Toggle Something Extra Dollars switch
+            try:
+                await toggle_something_extra_dollars(page)
+            except Exception as e:
+                logging.warning(f"Failed to toggle Something Extra Dollars: {e}")
 
             logging.info(f"Successfully clipped {total_clipped} total offers")
             logging.debug("... Finished")
