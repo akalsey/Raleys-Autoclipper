@@ -69,25 +69,57 @@ async def toggle_something_extra_dollars(page, screenshots_enabled=False):
     logging.debug("Navigating to Something Extra Dollars page")
     logging.debug(f"Going to URL: {SOMETHING_EXTRA_DOLLARS_URL}")
     await page.goto(SOMETHING_EXTRA_DOLLARS_URL)
-    await take_screenshot(page, "something_extra_dollars_page", screenshots_enabled)
+    await take_screenshot(page, "something_extra_dollars_page_initial", screenshots_enabled)
     
-    logging.debug("Waiting for toggle switch to appear...")
-    await page.wait_for_selector('button[role="switch"]', timeout=10000)  # Wait for the toggle switch to appear
-    logging.debug("Toggle switch found")
-
-    # Check the state of the toggle switch
-    logging.debug("Checking toggle switch state...")
-    is_checked = await page.get_attribute('button[role="switch"]', 'aria-checked')
-    logging.debug(f"Toggle switch aria-checked value: {is_checked}")
-    if is_checked == "false":
-        logging.info("Activating Something Extra Dollars")
-        await take_screenshot(page, "before_toggle_click", screenshots_enabled)
-        await page.click('button[role="switch"]')
-        logging.debug("Clicked toggle switch, waiting 1 second...")
-        await page.wait_for_timeout(1000)  # Allow time for the action to register
-        await take_screenshot(page, "after_toggle_click", screenshots_enabled)
-    else:
-        logging.debug("Toggle switch is already on.")
+    logging.debug("Waiting for Something Extra Dollars content to load...")
+    
+    # Wait for the SE dollars content specifically - look for the dollar amount or SE icon
+    try:
+        # Wait for either the dollar amount display or the SE icon to appear
+        await page.wait_for_selector('svg[alt="se-dollars"], h1:has-text("$"), button:has-text("Activate")', timeout=20000)
+        logging.debug("SE Dollars content detected, waiting a bit more for full render...")
+        await page.wait_for_timeout(2000)
+        await take_screenshot(page, "something_extra_dollars_content_loaded", screenshots_enabled)
+    except Exception as e:
+        logging.warning(f"SE Dollars content didn't load within timeout: {e}")
+        await take_screenshot(page, "something_extra_dollars_timeout", screenshots_enabled)
+        
+        # Try waiting a bit longer and take another screenshot
+        logging.debug("Trying additional wait...")
+        await page.wait_for_timeout(5000)
+        await take_screenshot(page, "something_extra_dollars_additional_wait", screenshots_enabled)
+    
+    logging.debug("Looking for Activate button or checking if already activated...")
+    
+    # First check if there's an Activate button
+    activate_button = page.locator('button:has-text("Activate")')
+    if await activate_button.is_visible():
+        logging.info("Found Activate button - activating Something Extra Dollars")
+        await take_screenshot(page, "before_activate_click", screenshots_enabled)
+        await activate_button.click()
+        logging.debug("Clicked Activate button, waiting 2 seconds...")
+        await page.wait_for_timeout(2000)  # Allow time for the action to register
+        await take_screenshot(page, "after_activate_click", screenshots_enabled)
+        return
+    
+    # Fallback: try the old toggle switch method
+    try:
+        logging.debug("No Activate button found, looking for toggle switch...")
+        await page.wait_for_selector('button[role="switch"]', timeout=5000)
+        logging.debug("Toggle switch found")
+        
+        is_checked = await page.get_attribute('button[role="switch"]', 'aria-checked')
+        logging.debug(f"Toggle switch aria-checked value: {is_checked}")
+        if is_checked == "false":
+            logging.info("Activating Something Extra Dollars via toggle")
+            await take_screenshot(page, "before_toggle_click", screenshots_enabled)
+            await page.click('button[role="switch"]')
+            await page.wait_for_timeout(1000)
+            await take_screenshot(page, "after_toggle_click", screenshots_enabled)
+        else:
+            logging.debug("Toggle switch is already on.")
+    except:
+        logging.info("Something Extra Dollars may already be activated - no Activate button or toggle found")
 
 async def login_and_clip_offers(args):
     logging.debug("Starting...")
