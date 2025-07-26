@@ -165,20 +165,24 @@ async def login_and_clip_offers(args):
             await page.wait_for_timeout(3000)
             await take_screenshot(page, "after_login", screenshots_enabled)
             
-            # Check if we're actually logged in by looking for account elements
+            # Check if we're actually logged in by looking for the user greeting
             logging.debug("Checking if login was successful...")
             try:
-                await page.wait_for_selector('a:has-text("Account")', timeout=5000)
-                logging.info("Login confirmed - found account link")
+                # Look for the "Hi, [Name]" pattern which indicates successful login
+                await page.wait_for_selector('span:has-text("Hi,"):has(+ span.skip-translation)', timeout=5000)
+                logging.info("Login confirmed - found user greeting")
             except:
-                logging.warning("Login may have failed - account link not found")
-                # Try alternative login indicators
+                logging.warning("Login may have failed - user greeting not found")
+                # Try alternative login indicator - check if we still see "Log In" link
                 try:
-                    await page.wait_for_selector('[data-testid="user-menu"]', timeout=2000)
-                    logging.info("Login confirmed - found user menu")
+                    login_link = await page.locator('a:has-text("Log In")').is_visible()
+                    if login_link:
+                        logging.error("Login failed - still showing Log In link")
+                        await take_screenshot(page, "login_failed", screenshots_enabled)
+                    else:
+                        logging.info("Login may have succeeded - no Log In link visible")
                 except:
-                    logging.error("Could not confirm login success")
-                    await take_screenshot(page, "login_failed", screenshots_enabled)
+                    logging.warning("Could not determine login status")
 
             # Clip Unclipped My Offers
             logging.debug("Starting to clip Unclipped My Offers...")
