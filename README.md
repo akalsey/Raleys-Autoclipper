@@ -26,6 +26,32 @@ RALEYS_PASSWORD=
 
 `python raleys-autoclipper.py`
 
+### Command Line Options
+
+The script supports several command line options to customize its behavior:
+
+**`--head`** - Runs the browser in headed mode, showing the GUI window. Useful for troubleshooting or watching the script work. By default, the script runs headless (no GUI).
+
+**`--debug`** - Enables debug logging to see detailed information about what the script is doing at each step. Helpful for diagnosing issues.
+
+**`--log [LEVEL]`** - Sets a specific log level. Options are DEBUG, INFO, WARNING, ERROR, or CRITICAL. Use this for fine-tuned control over logging verbosity.
+
+**`--screenshots`** - Takes screenshots at key points during execution and saves them to a `screenshots/` directory. Invaluable for debugging issues, especially when comparing headless vs headed behavior.
+
+Examples:
+```bash
+# Run with GUI visible for troubleshooting
+python raleys-autoclipper.py --head
+
+# Run with debug logging and screenshots
+python raleys-autoclipper.py --debug --screenshots
+
+# Run headless with screenshots (good for cron jobs)
+python raleys-autoclipper.py --screenshots --log INFO
+```
+
+### Automation
+
 This application can be run with cron. For example to run it daily, add something to your crontab like this:
 
 `0 0 * * * /usr/bin/python3 /path/to/raleys-autoclippper.py`
