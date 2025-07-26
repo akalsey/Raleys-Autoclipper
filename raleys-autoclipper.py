@@ -15,6 +15,7 @@ import logging
 from datetime import datetime
 import sys
 import argparse
+import os
 try:
     from dotenv import load_dotenv
     load_dotenv()  # Load environment variables from .env file if available
@@ -39,6 +40,7 @@ def parse_arguments():
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--log', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], 
                        help='Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
+    parser.add_argument('--screenshots', action='store_true', help='Take screenshots at key points during execution')
     return parser.parse_args()
 
 def configure_logging(args):
@@ -51,10 +53,24 @@ def configure_logging(args):
     
     logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
-async def toggle_something_extra_dollars(page):
+async def take_screenshot(page, name, screenshots_enabled=False):
+    if not screenshots_enabled:
+        return
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    screenshots_dir = "screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+    
+    filename = f"{screenshots_dir}/{timestamp}_{name}.png"
+    await page.screenshot(path=filename, full_page=True)
+    logging.info(f"Screenshot saved: {filename}")
+
+async def toggle_something_extra_dollars(page, screenshots_enabled=False):
     logging.debug("Navigating to Something Extra Dollars page")
     logging.debug(f"Going to URL: {SOMETHING_EXTRA_DOLLARS_URL}")
     await page.goto(SOMETHING_EXTRA_DOLLARS_URL)
+    await take_screenshot(page, "something_extra_dollars_page", screenshots_enabled)
+    
     logging.debug("Waiting for toggle switch to appear...")
     await page.wait_for_selector('button[role="switch"]', timeout=10000)  # Wait for the toggle switch to appear
     logging.debug("Toggle switch found")
@@ -65,24 +81,48 @@ async def toggle_something_extra_dollars(page):
     logging.debug(f"Toggle switch aria-checked value: {is_checked}")
     if is_checked == "false":
         logging.info("Activating Something Extra Dollars")
+        await take_screenshot(page, "before_toggle_click", screenshots_enabled)
         await page.click('button[role="switch"]')
         logging.debug("Clicked toggle switch, waiting 1 second...")
         await page.wait_for_timeout(1000)  # Allow time for the action to register
+        await take_screenshot(page, "after_toggle_click", screenshots_enabled)
     else:
         logging.debug("Toggle switch is already on.")
 
 async def login_and_clip_offers(args):
     logging.debug("Starting...")
     total_clipped = 0  # Initialize total counter
+    screenshots_enabled = args.screenshots
     async with async_playwright() as p:
         # Start a browser session
         headed = args.head
         logging.debug(f"Running in {'headed' if headed else 'headless'} mode")
         arc_user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Arc/1.48.1"
         logging.debug("Launching browser...")
-        browser = await p.chromium.launch(headless=not headed)  # Use --head to run with GUI
+        
+        # Minimal stealth - only hide the most obvious automation indicator
+        browser = await p.chromium.launch(
+            headless=not headed,
+            args=['--disable-blink-features=AutomationControlled'] if not headed else []
+        )
+        
         logging.debug("Creating browser context...")
-        context = await browser.new_context(user_agent=arc_user_agent)
+        context = await browser.new_context(
+            user_agent=arc_user_agent,
+            viewport={'width': 1920, 'height': 1080},  # Set consistent viewport size
+            extra_http_headers={
+                'Accept-Language': 'en-US,en;q=0.9'
+            }
+        )
+        
+        # Only hide the webdriver property
+        if not headed:
+            await context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+            """)
+        
         logging.debug("Creating new page...")
         page = await context.new_page()
         
@@ -93,17 +133,20 @@ async def login_and_clip_offers(args):
             logging.debug("Waiting for page to load...")
             await page.wait_for_load_state("domcontentloaded", timeout=10000)
             logging.debug("Page reached domcontentloaded state")
+            await take_screenshot(page, "homepage_loaded", screenshots_enabled)
             
             logging.debug("Looking for login link...")
             await page.click('a:has-text("Log In")')  # Click the login link to open the modal
             logging.debug("Clicked login link, waiting for email input field...")
             await page.wait_for_selector('input[name="email"]', timeout=10000)  # Wait for the modal to appear, with a longer timeout
+            await take_screenshot(page, "login_modal_open", screenshots_enabled)
 
             # Fill in the login form
             logging.debug("Filling in email field...")
             await page.fill('input[name="email"]', RALEYS_EMAIL)
             logging.debug("Filling in password field...")
             await page.fill('input[name="password"]', RALEYS_PASSWORD)
+            await take_screenshot(page, "login_form_filled", screenshots_enabled)
 
             # Click the login button using the correct HTML class
             logging.debug("Clicking login submit button...")
@@ -120,6 +163,7 @@ async def login_and_clip_offers(args):
             # Wait additional time for login to fully process
             logging.debug("Waiting for login to complete...")
             await page.wait_for_timeout(3000)
+            await take_screenshot(page, "after_login", screenshots_enabled)
             
             # Check if we're actually logged in by looking for account elements
             logging.debug("Checking if login was successful...")
@@ -134,29 +178,30 @@ async def login_and_clip_offers(args):
                     logging.info("Login confirmed - found user menu")
                 except:
                     logging.error("Could not confirm login success")
+                    await take_screenshot(page, "login_failed", screenshots_enabled)
 
             # Clip Unclipped My Offers
             logging.debug("Starting to clip Unclipped My Offers...")
-            clipped = await clip_offers(page, UNCLIPPED_MY_OFFERS_URL)
+            clipped = await clip_offers(page, UNCLIPPED_MY_OFFERS_URL, screenshots_enabled)
             total_clipped += clipped
             logging.debug(f"Clipped {clipped} from Unclipped My Offers")
 
             # Clip Member Deals
             logging.debug("Starting to clip Member Deals...")
-            clipped = await clip_offers(page, MEMBER_DEALS_URL)
+            clipped = await clip_offers(page, MEMBER_DEALS_URL, screenshots_enabled)
             total_clipped += clipped
             logging.debug(f"Clipped {clipped} from Member Deals")
 
             # Clip My Coupons
             logging.debug("Starting to clip My Coupons...")
-            clipped = await clip_offers(page, MY_COUPONS_URL)
+            clipped = await clip_offers(page, MY_COUPONS_URL, screenshots_enabled)
             total_clipped += clipped
             logging.debug(f"Clipped {clipped} from My Coupons")
 
             # Toggle Something Extra Dollars switch
             logging.debug("Starting Something Extra Dollars toggle...")
             try:
-                await toggle_something_extra_dollars(page)
+                await toggle_something_extra_dollars(page, screenshots_enabled)
             except Exception as e:
                 logging.warning(f"Failed to toggle Something Extra Dollars: {e}")
 
@@ -171,9 +216,11 @@ async def login_and_clip_offers(args):
             logging.debug("Closing browser...")
             await browser.close()
 
-async def clip_offers(page, offers_url):
+async def clip_offers(page, offers_url, screenshots_enabled=False):
     offers_clipped = 0  # Initialize counter for this category
     logging.debug(f"Starting clip_offers for {offers_url}")
+    page_counter = 1
+    
     while True:
         # Go to the offers page
         logging.info(f"Navigating to {offers_url}")
@@ -190,6 +237,10 @@ async def clip_offers(page, offers_url):
         
         logging.debug("Waiting 3 seconds for offers to load...")
         await page.wait_for_timeout(3000)  # Allow time for offers to load
+
+        # Take screenshot of the offers page
+        page_name = offers_url.split('=')[-1] if '=' in offers_url else 'offers'
+        await take_screenshot(page, f"{page_name}_page_{page_counter}", screenshots_enabled)
 
         # Find all clip buttons on the page
         logging.debug("Looking for clip buttons on page...")
@@ -220,7 +271,9 @@ async def clip_offers(page, offers_url):
                 logging.debug("Checking for unavailable offer modal...")
                 if await page.locator('text="Unfortunately, this offer is no longer available to clip."').is_visible():
                     logging.debug("Offer is no longer available. Clicking OK to continue.")
-                    await page.click('button:has-text("OK")')
+                    await take_screenshot(page, f"unavailable_offer_modal", screenshots_enabled)
+                    # Use more specific selector for the modal's OK button
+                    await page.locator('[data-testid="modal-overlay"] button:has-text("OK")').click()
                     await page.wait_for_timeout(500)
                 else:
                     offers_clipped += 1  # Increment counter only if successfully clipped
@@ -233,6 +286,7 @@ async def clip_offers(page, offers_url):
         # Reload the page to check if there are additional offers left to clip
         logging.debug("Waiting 2 seconds before checking for more offers...")
         await page.wait_for_timeout(2000)
+        page_counter += 1
     
     logging.debug(f"Finished clipping offers from {offers_url}, total clipped: {offers_clipped}")
     return offers_clipped  # Return the number of offers clipped in this category
