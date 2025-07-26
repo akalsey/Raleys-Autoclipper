@@ -4,8 +4,7 @@
 # dependencies = [
 #     "asyncio",
 #     "playwright",
-#     "python-dotenv",
-#     "flask"
+#     "python-dotenv"
 # ]
 # ///
 
